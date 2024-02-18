@@ -1,12 +1,15 @@
 mod database;
 
 use database::{add_task, init_connection};
+use database::{reset_db, show_tasks};
 
 use rusqlite::Connection;
 use rusqlite::Result;
 
 fn main() -> Result<()> {
-    init_connection()?;
+    // reset_db()?;
+    // init_connection()?;
     add_task()?;
+    show_tasks()?;
     Ok(())
 }

@@ -1,8 +1,9 @@
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, SubsecRound, Utc};
 use rusqlite::{params, Connection, Result};
 use std::io::{self, Write};
 use uuid::Uuid;
 
+#[derive(Debug)]
 struct Task {
     id: String,
     task_name: String,
@@ -13,11 +14,6 @@ struct Task {
 
 pub fn init_connection() -> Result<Connection> {
     let conn = Connection::open("todo.db")?;
-
-    conn.execute(
-        "DROP TABLE IF EXISTS person",
-        (), // empty list of parameters.
-    )?;
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS lists (
@@ -68,9 +64,9 @@ pub fn add_task() -> Result<Connection> {
 
     let task = Task {
         id: Uuid::new_v4().to_string(),
-        task_name,
+        task_name: task_name.trim().to_string(),
         task_info,
-        created_on: Local::now().naive_local().to_string(),
+        created_on: Local::now().round_subsecs(0).naive_local().to_string(),
         completed: false,
     };
 
@@ -85,5 +81,54 @@ pub fn add_task() -> Result<Connection> {
         ],
     )?;
 
+    Ok(conn)
+}
+
+pub fn show_tasks() -> Result<()> {
+    let conn = Connection::open("todo.db")?;
+
+    let mut stmt = conn.prepare("SELECT * from tasks")?;
+
+    let tasks = stmt.query_map((), |row| {
+        Ok(Task {
+            id: row.get(0)?,
+            task_name: row.get(1)?,
+            task_info: row.get(2)?,
+            created_on: row.get(3)?,
+            completed: row.get(4)?,
+        })
+    })?;
+
+    println!("#####################################");
+    for task in tasks {
+        let task = task.unwrap();
+        print!("id: {}\n", task.id);
+        print!("task name: {}\n", task.task_name);
+        match task.task_info {
+            Some(x) => print!("task info: {}", x),
+            None => print!("task info: "),
+        }
+        print!("created on: {}\n", task.created_on);
+        print!("completed: {}\n", task.completed);
+        println!("#####################################")
+    }
+
+    Ok(())
+}
+
+// util function to reset database for testing
+pub fn reset_db() -> Result<Connection> {
+    let conn = Connection::open("todo.db")?;
+    conn.execute("DROP TABLE IF EXISTS tasks", ())?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS tasks (
+            id STRING PRIMARY KEY,
+            task_name TEXT NOT NULL,
+            task_info BLOB,
+            created_on TEXT NOT NULL,
+            completed INTEGER
+        )",
+        (),
+    )?;
     Ok(conn)
 }

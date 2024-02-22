@@ -62,6 +62,7 @@ impl Task {
         Ok(())
     }
 
+    // Returns a vec of all Tasks in database
     pub fn list(conn: &Connection) -> Result<Vec<Task>> {
         let mut stmt = conn.prepare("SELECT * FROM todo ORDER by is_done, id")?;
         let task_iter = stmt.query_map((), |row| {
@@ -81,6 +82,17 @@ impl Task {
         Ok(tasks)
     }
 
+    // Prints list of Tasks
+    pub fn print_list(tasks: Vec<Task>) -> Result<()> {
+        for task in tasks {
+            println!(
+                "{:>4} | {:<44} {:<8} {}",
+                task.id, &task.task_name, task.is_done, task.created_on,
+            );
+        }
+        Ok(())
+    }
+  
     // Toggle 'is_done' field for a Task
     pub fn toggle(conn: &Connection, id: i32) -> Result<()> {
         conn.execute("UPDATE todo SET is_done = 1 - is_done WHERE id = ?", &[&id])?;

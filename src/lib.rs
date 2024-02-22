@@ -98,6 +98,12 @@ impl Task {
         conn.execute("UPDATE todo SET is_done = 1 - is_done WHERE id = ?", &[&id])?;
         Ok(())
     }
+
+    // Delete a Task from the database
+    pub fn delete_task(conn: &Connection, id: i32) -> Result<()> {
+        conn.execute("DELETE FROM todo WHERE id = ?", &[&id])?;
+        Ok(())
+    }
 }
 
 pub fn init_connection() -> Result<Connection> {

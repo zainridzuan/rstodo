@@ -9,7 +9,5 @@ use rusqlite::Result;
 fn main() -> Result<()> {
     // reset_db()?;
     // init_connection()?;
-    add_task()?;
-    show_tasks()?;
     Ok(())
 }
